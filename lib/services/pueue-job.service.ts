@@ -161,7 +161,7 @@ export class PueueJobService {
         if (BackoffOptions.type === 'linear') {
             return BackoffOptions.delay * attempts
         } else if (BackoffOptions.type === 'exponential') {
-            return Math.pow(BackoffOptions.delay, attempts)
+            return BackoffOptions.delay * Math.pow(2, attempts)
         }
         return BackoffOptions.delay
     }
