@@ -1,6 +1,6 @@
 {
   "name": "nestjs-pueue",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Queue manager for NestJS applications using TypeORM and PostgreSQL",
   "author": "Guilherme Gotin",
   "license": "MIT",
