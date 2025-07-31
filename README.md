@@ -40,6 +40,39 @@ import { PueueModule } from 'nestjs-pueue'
 })
 export class AppModule {}
 ```
+### Using with an Existing TypeORM Module
+
+> **Note:** Use this approach only if your application already initializes the TypeORM module. Registering `PueueModule.forRoot()` with its own options when TypeORM is already set up may cause connection conflicts.
+
+If your application already configures TypeORM, you can integrate `PueueModule` without duplicating database settings. Just call `PueueModule.forRoot()` with no arguments, and it will automatically use the existing TypeORM connection.
+
+For applications with multiple TypeORM data sources, you can specify the `dataSourceName` to tell `PueueModule` which connection to use.
+
+```typescript
+import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { PueueModule } from 'nestjs-pueue'
+
+@Module({
+    imports: [
+        TypeOrmModule.forRoot({
+            type: 'postgres',
+            host: 'localhost',
+            port: 5432,
+            username: 'postgres',
+            password: 'postgres',
+            // ...other TypeORM options...
+        }),
+        PueueModule.forRoot(),
+        // Or, for a specific data source:
+        // PueueModule.forRoot('default'),
+    ],
+})
+export class AppModule {}
+```
+
+This setup ensures `PueueModule` reuses your existing TypeORM configuration and avoids conflicts. Only provide options to `PueueModule.forRoot()` if you are not already initializing TypeORM elsewhere in your application.
+
 
 ## Usage
 
