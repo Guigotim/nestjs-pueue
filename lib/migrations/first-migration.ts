@@ -25,7 +25,7 @@ export class FirstMigration implements Migration {
         )
         await queryRunner.query(
             `CREATE INDEX idx_job_query_status_process ON pueue.job 
-                (status, process, run_after)`
+                (status, process, run_after)`,
         )
         await queryRunner.query(`
             INSERT INTO "pueue"."migration" (version, name) VALUES (${this.version}, '${this.name}')

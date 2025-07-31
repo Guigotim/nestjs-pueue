@@ -11,12 +11,11 @@ import { PueueMigrationManager } from './pueue-migration.manager'
 @Global()
 @Module({})
 export class PueueModule {
-
     /**
      * Registers the PueueModule using `default` data source.
-     * 
+     *
      * Note: It's only works if you have already initialized TypeORM globally in your application.
-     * 
+     *
      * @returns A DynamicModule configured with the specified options or data source name.
      */
     static forRoot(): DynamicModule
@@ -38,9 +37,9 @@ export class PueueModule {
 
     /**
      * Registers the PueueModule with the specified data source name.
-     * 
+     *
      * Note: It's only works if you have already initialized TypeORM globally in your application.
-     * 
+     *
      * @param dataSourceName - The name of the data source to use for the PueueModule.
      * @returns A DynamicModule configured with the specified data source name.
      */

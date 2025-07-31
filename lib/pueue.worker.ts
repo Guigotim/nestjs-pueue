@@ -60,7 +60,12 @@ export class PueueWorker implements OnApplicationBootstrap {
         while (true) {
             this.logger.debug(`Processing process job ${process.name} on ${instance.constructor.name}:${method}`)
             try {
-                await this.jobService.process(process.name, instance[method].bind(instance), process.concurrency, process.batchSize)
+                await this.jobService.process(
+                    process.name,
+                    instance[method].bind(instance),
+                    process.concurrency,
+                    process.batchSize,
+                )
             } catch (error) {
                 this.logger.error(`Error on processing ${process.name}`, error.stack, JSON.stringify(error.message))
             } finally {

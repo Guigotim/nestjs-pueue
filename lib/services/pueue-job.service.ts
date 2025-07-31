@@ -10,9 +10,7 @@ import { QueueHookOptions } from 'lib/decorators/queue-hooks.decorators'
 export class PueueJobService {
     private eventEmitter = new EventEmitter()
     private readonly logger = new Logger(PueueJobService.name)
-    constructor(
-        private dataSource: DataSource,
-    ) {}
+    constructor(private dataSource: DataSource) {}
 
     async process(process: string, handler: (job: PueueJob) => Promise<void>, concurrency = 1, batchSize = 1) {
         const queryRunner = this.dataSource.createQueryRunner()
@@ -21,7 +19,7 @@ export class PueueJobService {
         await queryRunner.connect()
         await queryRunner.startTransaction()
 
-        if(batchSize < concurrency) {
+        if (batchSize < concurrency) {
             batchSize = concurrency
         }
 
@@ -45,9 +43,15 @@ export class PueueJobService {
                         } catch (error) {
                             if (job.attempt === job.maxAttempts) {
                                 await this.markJobAsFailed(job, error.message, manager)
-                                this.logger.error(`Error on processing ${process} job ${job.id}`, error.stack, error.message)
+                                this.logger.error(
+                                    `Error on processing ${process} job ${job.id}`,
+                                    error.stack,
+                                    error.message,
+                                )
                             } else {
-                                this.logger.warn(`Attempt ${job.attempt} on processing ${process} failed for job ${job.id}: ${JSON.stringify(error.message)}`)
+                                this.logger.warn(
+                                    `Attempt ${job.attempt} on processing ${process} failed for job ${job.id}: ${JSON.stringify(error.message)}`,
+                                )
                                 await this.updateJobAttempts(job, error.message, manager)
                             }
                         }
@@ -75,13 +79,13 @@ export class PueueJobService {
         return await this.dataSource.transaction(async (em) => {
             const job = em.create(PueueJob, {
                 ...jobOptions,
-                process: process,   
+                process: process,
                 status: 'pending',
                 attempt: 1,
                 backoff:
-                typeof jobOptions.backoff == 'number'
-                    ? { delay: jobOptions.backoff, type: 'fixed' }
-                    : jobOptions.backoff || { delay: 0, type: 'fixed' },
+                    typeof jobOptions.backoff == 'number'
+                        ? { delay: jobOptions.backoff, type: 'fixed' }
+                        : jobOptions.backoff || { delay: 0, type: 'fixed' },
                 runAfter: new Date(Date.now() + (jobOptions.delay || 0)),
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -94,7 +98,11 @@ export class PueueJobService {
         this.eventEmitter.on(`${options.process}:${options.eventName}`, (job: PueueJob) => handler(job))
     }
 
-    private async findPendingJobsByProcess(process: string, batchSize: number, em: EntityManager): Promise<PueueJob[] | null> {
+    private async findPendingJobsByProcess(
+        process: string,
+        batchSize: number,
+        em: EntityManager,
+    ): Promise<PueueJob[] | null> {
         const queryBuilder = em.createQueryBuilder(PueueJob, 'job')
         return await queryBuilder
             .where("job.status = 'pending'")
@@ -109,39 +117,55 @@ export class PueueJobService {
     }
 
     private async markJobAsCompleted(job: PueueJob, em: EntityManager) {
-        await em.update(PueueJob, {id: job.id, process: job.process}, {
-            status: 'completed',
-            updatedAt: new Date(),
-        })
+        await em.update(
+            PueueJob,
+            { id: job.id, process: job.process },
+            {
+                status: 'completed',
+                updatedAt: new Date(),
+            },
+        )
         this.emitSafe(PueueEvents.COMPLETED, job)
     }
 
     private async markJobAsInterrupted(job: PueueJob, em: EntityManager) {
-        await em.update(PueueJob, {id: job.id, process: job.process}, {
-            status: 'interrupted',
-            log: job.log,
-            updatedAt: new Date(),
-        })
+        await em.update(
+            PueueJob,
+            { id: job.id, process: job.process },
+            {
+                status: 'interrupted',
+                log: job.log,
+                updatedAt: new Date(),
+            },
+        )
         this.emitSafe(PueueEvents.INTERRUPTED, job)
     }
 
     private async markJobAsFailed(job: PueueJob, errorMessage: string, em: EntityManager) {
-        await em.update(PueueJob, {id: job.id, process: job.process}, {
-            status: 'failed',
-            attempt: job.attempt,
-            log: errorMessage,
-            updatedAt: new Date(),
-        })
+        await em.update(
+            PueueJob,
+            { id: job.id, process: job.process },
+            {
+                status: 'failed',
+                attempt: job.attempt,
+                log: errorMessage,
+                updatedAt: new Date(),
+            },
+        )
         this.emitSafe(PueueEvents.FAILED, job)
     }
 
     private async updateJobAttempts(job: PueueJob, errorMessage: string, em: EntityManager) {
-        await em.update(PueueJob, {id: job.id, process: job.process}, {
-            attempt: job.attempt + 1,
-            runAfter: new Date(Date.now() + this.calculateBackoffDelay(job.backoff, job.attempt)),
-            log: errorMessage,
-            updatedAt: new Date(),
-        })
+        await em.update(
+            PueueJob,
+            { id: job.id, process: job.process },
+            {
+                attempt: job.attempt + 1,
+                runAfter: new Date(Date.now() + this.calculateBackoffDelay(job.backoff, job.attempt)),
+                log: errorMessage,
+                updatedAt: new Date(),
+            },
+        )
         this.emitSafe(PueueEvents.ERROR, job)
     }
 
